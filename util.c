@@ -20,6 +20,9 @@ int skipViewFile(FILE *fp, int offset)
     }
     long length;
     length = fileSize(fp);
+    if(offset > length){
+        return -2;
+    }
     char* buf = (char*)malloc(length);
     fseek(fp, offset, SEEK_SET);
     fread(buf, length - offset, 1, fp);
@@ -27,4 +30,5 @@ int skipViewFile(FILE *fp, int offset)
         printf("%c", buf[i]);
     }
     free(buf);
+    return 0;
 }
