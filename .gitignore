@@ -1,3 +1,7 @@
 *.[ao]
 fileSkipViewer
 hpXmlParser
+GPATH   
+GSYMS 
+GRTAGS  
+GTAGS
