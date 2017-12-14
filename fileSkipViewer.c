@@ -2,8 +2,9 @@
 
 int main(int argc, char** argv)
 {
-    if( argc != 3){
-        printf("usage ./fileSkipViewer fileName offset\n");
+    if( argc != 4){
+        printf("usage: view 0 to offset ./fileSkipViewer fileName offset -1\n");
+        printf("usage: view offset to fileEnd ./fileSkipViewer fileName offset 1\n");
         exit(1);
     }
     FILE* fp = fopen(argv[1], "r");
@@ -12,7 +13,8 @@ int main(int argc, char** argv)
         exit(2);
     }
     int offset = atoi(argv[2]);
-    int result = skipViewFile(fp, offset);
+    int direction = atoi(argv[3]);
+    int result = skipViewFile(fp, offset, direction);
     if(-1 == result){
         printf("打开文件失败\n");
     }else if( -2 == result){

@@ -13,22 +13,35 @@ long fileSize(FILE *fp)
     return length;
 }
 
-int skipViewFile(FILE *fp, int offset)
+int skipViewFile(FILE *fp, int offset, int direction)
 {
-    if(fp == NULL){
+    if(fp == NULL ){
         return -1;
-    }
-    long length;
-    length = fileSize(fp);
-    if(offset > length){
+    }else if(offset < 0){
         return -2;
     }
-    char* buf = (char*)malloc(length);
-    fseek(fp, offset, SEEK_SET);
-    fread(buf, length - offset, 1, fp);
-    for(int i = 0; i < length - offset; ++i){
-        printf("%c", buf[i]);
+    long length;
+    if(direction == -1){
+        char* buf = (char*)malloc(offset);
+        //fseek(fp, OL, SEEK_SET);
+        fread(buf, offset, 1, fp);
+        for(int i = 0; i < offset; ++i){
+            printf("%c", buf[i]);
+        }
+        free(buf);
+        return 0;
+    }else{
+        length = fileSize(fp);
+        if(offset > length){
+            return -2;
+        }
+        char* buf = (char*)malloc(length);
+        fseek(fp, offset, SEEK_SET);
+        fread(buf, length - offset, 1, fp);
+        for(int i = 0; i < length - offset; ++i){
+            printf("%c", buf[i]);
+        }
+        free(buf);
+        return 0;
     }
-    free(buf);
-    return 0;
 }

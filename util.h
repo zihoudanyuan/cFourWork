@@ -3,5 +3,5 @@
 #include<stdio.h>
 #include<stdlib.h>
 long fileSize(FILE *fp);
-int skipViewFile(FILE *fp, int offset);
+int skipViewFile(FILE *fp, int offset, int direction);
 #endif
