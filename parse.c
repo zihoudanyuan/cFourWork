@@ -76,29 +76,7 @@ int judgeNameEx(char *data, int *i, int len, int *stop)
     *stop = *i;
     return TRUE;
 }
-// int extractName(char *data, int *i, int len)
-// {
-//     // if (*i >= len)
-//     // {
-//     //     return FALSE;
-//     // }
-//     assert(*i >= len);
-//     if (!judgeNameStartChar(data[*i]))
-//     {
-//         errorState = WRONGSTARTCHAR;
-//         return FALSE;
-//     }
-//     (*i)++;
-//     Event *e = (Event *)malloc(sizeof(Event));
-//     e->type = STAG;
-//     e->startPos = i;
-//     while (*i < len && judgeNameChar(data[*i]))
-//     {
-//         (*i)++;
-//     }
-//     e->endPos = (*i) - 1;
-//     return TRUE;
-// }
+
 int judgeChar(char ch)
 {
     if (ch == 0x9 || ch == 0xA || ch == 0xD || (ch >= 0x20 && ch <= 0x7F))
@@ -145,15 +123,6 @@ int judgeEqual(char *data, int *i, int len)
     {
         j++;
     }
-    // if (judgeSpace(data[j]))
-    // {
-    //     j++;
-    // }
-    // else
-    // {
-    //     *i = j;
-    //     return FALSE;
-    // }
 
     if (j < len && data[j] == '=')
     {
@@ -342,7 +311,7 @@ int judgeAttValue(char *data, int *i, int len)
             else if (judgeReference(data, &k, len))
             {
             }
-            else if (*i < len && data[k] == '\"') //bug 详见testparse.c
+            else if (*i < len && data[k] == '\"') //bug detail in testparse.c
             {
                 *i = k + 1;
                 return TRUE;
@@ -357,6 +326,10 @@ int judgeAttValue(char *data, int *i, int len)
             errorState = INCOMPLETE;
             return INCOMPLETE;
         }
+        else
+        {
+            return FALSE;
+        }
     }
     else if (data[*i] == '\'')
     {
@@ -368,7 +341,7 @@ int judgeAttValue(char *data, int *i, int len)
         //     return TRUE;
         // }
         (*i)++;
-        assert(*i < len);
+        //assert(*i < len);
         //int count = 0;
         int k;
         for (k = *i; k < len; k++)
@@ -390,7 +363,7 @@ int judgeAttValue(char *data, int *i, int len)
                 *i = k + 1;
                 return TRUE;
             }
-            else
+            else // because one call only find one AttValue
             {
                 return FALSE;
             }
@@ -399,6 +372,10 @@ int judgeAttValue(char *data, int *i, int len)
         {
             errorState = INCOMPLETE;
             return INCOMPLETE;
+        }
+        else
+        {
+            return FALSE; //when arrive here
         }
     }
     else
@@ -479,11 +456,8 @@ SE Order A date “1999-1-1” SE shipTo A country “US” SE name CD “Alice 
 
 void parseStartTag(char *data, Bcs bcs, int len, DataBuf *dataBuf)
 {
-    printf("start parseStartTag\n");
+    //printf("start parseStartTag\n");
     int i = bcs.bufpos + 1;
-    // for (int i = bcs.bufpos + 1; i < len - 1; i++) //why len - 1
-    //{
-    //printf("%c", data[i]);
     if (!judgeNameStartChar(data[i]))
     {
         errorState = 2; // WRONGSTART
@@ -506,10 +480,10 @@ void parseStartTag(char *data, Bcs bcs, int len, DataBuf *dataBuf)
     event->startPos = nameStart;
     event->stopPos = nameEnd;
 
-    for (int m = nameStart; m < nameEnd; ++m)
-    {
-        printf("%c", data[m]);
-    }
+    // for (int m = nameStart; m < nameEnd; ++m)
+    // {
+    //     printf("%c", data[m]);
+    // }
     //break;
 
     //handle empty attribute or empty element
@@ -563,48 +537,6 @@ void parseStartTag(char *data, Bcs bcs, int len, DataBuf *dataBuf)
             //printf("false\n");
         }
     }
-    //at least one attribute
-    // for (int j = i; j < len; ++j)
-    // {
-    //     if (!judgeSpace(data[j]))
-    //     {
-    //         errorState = WRONGSPACE;
-    //         return;
-    //     }
-    //     j++;
-    //     if (j < len && !judgeNameStartChar(data[j]))
-    //     {
-    //         errorState = 2; // WRONGSTART
-    //         return;         // what happened here
-    //     }
-    //     int nameStart = j++;
-    //     while (j < len && judgeNameChar(data[j]))
-    //     {
-    //         j++;
-    //     }
-    //     if (j >= len)
-    //     {
-    //         errorState = INCOMPLETE;
-    //         return;
-    //     }
-    //     int nameEnd = j - 1;
-    //     Event *event = &(dataBuf->eventStream[dataBuf->eventIndex++]);
-    //     //(Event *)malloc(sizeof(Event));
-    //     event->type = ATTRIBUTE; //name
-    //     event->startPos = nameStart;
-    //     event->stopPos = nameEnd;
-
-    //     //judge eq
-    //     if (!judgeEqual(data, &j, len))
-    //     {
-    //         errorState = WRONGEQUALS;
-    //         return;
-    //     }
-
-    //     // if(judgeAttribute(data, j, len))
-    // }
-    // }
-    // printf("\n");
 }
 
 void parseEvents(DataBuf *dataBuf, int len)
@@ -614,7 +546,6 @@ void parseEvents(DataBuf *dataBuf, int len)
     {
         if (dataBuf->bcsay.bcs[i].bt == StagorEmptytag_start)
         {
-            //printf("pi\n");
             if (i + 1 < dataBuf->bufnum)
             {
                 //printf("first = %d, second = %d\n", dataBuf->bcsay.bcs[i].bufpos, dataBuf->bcsay.bcs[i+1].bufpos);
@@ -626,19 +557,9 @@ void parseEvents(DataBuf *dataBuf, int len)
                 }
                 //return;
             }
-            // int j = 0;
-            // for(j = dataBuf->bcsay.bcs[i].bufpos; j < dataBuf->bcsay.bcs[i+1].bufpos; ++j){
-            //     printf("%c", dataBuf->buf[j]);
-            // }
-            // break;
-            //i++;
         }
         else if (dataBuf->bcsay.bcs[i].bt == COMMENT_start)
         {
-            // int j = 0;
-            // for(j = dataBuf->bcsay.bcs[i].bufpos; j < dataBuf->bcsay.bcs[i+1].bufpos; ++j){
-            //     printf("%c", dataBuf->buf[j]);
-            // }
             i++;
         }
         else if (dataBuf->bcsay.bcs[i].bt == CDSECT_start)
