@@ -1,0 +1,7 @@
+<Order date="1999-1-1" date2="1999-1-2">
+<shipTo country="US">
+<name>
+Alice Smith
+</name>
+<!--comments-->
+</Order>

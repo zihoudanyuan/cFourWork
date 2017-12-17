@@ -5,33 +5,44 @@
 #define BUFLEN 1024
 #define TRUE 1
 #define FALSE 0
+#define INCOMPLETE 2
 //typedef int Bool;
 #define MAX_DATA_BUF_NUM 102400
 
 static int errorState = 0; //if not set to static, will occur multiple definitions
 
 typedef enum ErrorStatusType {
-    WRONGSTARTCHAR
+    WRONGSTARTCHAR,
+    WRONGSPACE,
+    WRONGATTRIBUTE,
+    WRONGEQUALS,
+    WRONGENTITYREF
 } ErrorStatusType;
 
-typedef enum EventType {
-    SE,
+typedef enum EventType { //ignore the empty type
+    STAG,
+    NAME,
+    ATTRIBUTE,
     PI,
     COMMENT,
     CDATA,
     CONTENT,
-    EE
+    ETAG,
 } EventType;
 
 typedef struct Event
 {
     int bcsNum;
     int startPos;
+    int stopPos;
     int len;
+    int startPos2;
+    int stopPos2;
     // char* eventData;
     // int offset;
     // int eventLen;
     // int startPos;
+    // int incomplete;
     EventType type;
 } Event;
 
@@ -58,18 +69,20 @@ typedef struct Bcsarray
     //struct Bcsarray *pre, *next;
 } Bcsarray;
 
-typedef struct EventStream
-{
-    Event event[BUFLEN / 10];
-} EventStream;
+// typedef struct EventStream
+// {
+//     Event event[BUFLEN / 10];
+// } EventStream;
 
 typedef struct DataBuf
 {
     char buf[BUFLEN];
     Bcsarray bcsay;
     int bufnum; //start from 0
-    EventStream subEventStream;
     int bufLen; //start from 1
+    //EventStream eventStream;
+    int eventIndex;
+    Event eventStream[BUFLEN / 10];
     // int FINISH_STAGE0;
     // int START_STAGE0;
     // int FINISH_STAGE1;

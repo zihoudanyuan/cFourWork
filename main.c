@@ -78,11 +78,6 @@ int main(int argc, char **argv)
         printf("2 argument is necessray\n");
         exit(1);
     }
-    //FILE* fp = fopen(argv[1], "r");
-    //long size = fileSize(fp);
-    //char* data = (char*)malloc(size * sizeof(char));
-    //fread(data, (unsigned int)size, 1, fp);
-    //fclose(fp);
     XmlParserContext *pContext = readXmlFile(argv[1]);
     if (pContext == NULL)
     {
@@ -95,6 +90,7 @@ int main(int argc, char **argv)
     {
         DataBuf *dataBuf = (DataBuf *)malloc(sizeof(DataBuf));
         dataBuf->bufnum = 0;
+        dataBuf->eventIndex = 0;
         memset(dataBuf, 0, sizeof(DataBuf));
         if (size - it < BUFLEN)
         {
@@ -117,12 +113,57 @@ int main(int argc, char **argv)
         pContext->dataBufList[pContext->dataBufIndex++] = dataBuf;
     }
     printf("dataBufIndex = %d\n", pContext->dataBufIndex);
-    // for(int i = 0; i <= pContext->dataBufIndex; i++){
-    //     parseEvents(pContext->dataBufList[i], BUFLEN);
-    //     break;//TODO how to get every dataBuf length, or to put it right after preprocess
-    // }
 
-    //traverseDataBuf(pContext);
+    printf("eventIndex = %d\n", pContext->dataBufList[0]->eventIndex);
+    for (int i = 0; i < pContext->dataBufIndex; ++i)
+    {
+        for (int k = 0; k < pContext->dataBufList[i]->eventIndex; ++k)
+        {
+            DataBuf *dataBuf = pContext->dataBufList[i];
+            Event *event = &(dataBuf->eventStream[k]);
+            if (event->type == STAG)
+            {
+                printf("SE ");
+                for (int m = event->startPos; m < event->stopPos; m++)
+                {
+                    printf("%c", dataBuf->buf[m]);
+                }
+                printf(" ");
+            }
+            else if (event->type == ATTRIBUTE)
+            {
+                printf("A ");
+                for (int m = event->startPos; m < event->stopPos; m++)
+                {
+                    printf("%c", dataBuf->buf[m]);
+                }
+                printf(" ");
+                for (int m = event->startPos2; m < event->stopPos2; m++)
+                {
+                    printf("%c", dataBuf->buf[m]);
+                }
+                printf(" ");
+            }
+            // int startPos = pContext->dataBufList[i]->bcsay.bcs[k].bufpos;
+            // int endPos;
+            // if (k + 1 < pContext->dataBufList[i]->bufnum)
+            // {
+            //     endPos = pContext->dataBufList[i]->bcsay.bcs[k + 1].bufpos;
+            // }
+            // else
+            // {
+            //     endPos = pContext->dataBufList[i]->bufLen;
+            // }
+            // for (int l = startPos; l < endPos; l++)
+            // {
+            //     printf("%c", pContext->dataBufList[i]->buf[l]);
+            // }
+        }
+    }
+    // //traverseDataBuf(pContext);
     freeResource(pContext);
+
+    //char *data = (char *)malloc(sizeof("Order data=\"1999-1-1\""));
+    //printf("%s\n", data);
     return 0;
 }

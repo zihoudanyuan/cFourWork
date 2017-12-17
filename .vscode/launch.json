@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/hpXmlParser",
+            "program": "${workspaceFolder}/testparse",
             "args": [
                 "../test1.xml"
             ],
