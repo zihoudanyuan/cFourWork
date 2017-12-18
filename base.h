@@ -23,6 +23,7 @@ typedef enum EventType { //ignore the empty type
     STAG,
     NAME,
     ATTRIBUTE,
+    CD,
     PI,
     COMMENT,
     CDATA,

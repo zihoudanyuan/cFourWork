@@ -4,4 +4,5 @@
 Alice Smith
 </name>
 <!--comments-->
+<![CDATA[<greeting>Hello, world!</greeting>]]>
 </Order>

@@ -10,7 +10,6 @@
  * AttValue   ::=   '"' ([^<&"] | Reference)* '"' |  "'" ([^<&'] | Reference)* "'"
  * Attribute   ::=    Name Eq AttValue
  * STag   ::=   '<' Name (S Attribute)* S? '>'
- * 
  * */
 #include "parse.h"
 
@@ -57,7 +56,7 @@ int judgeName(char *data, int *i, int len)
     return TRUE;
 }
 
-int judgeNameEx(char *data, int *i, int len, int *stop)
+int judgeNameEx(char *data, int *i, int len, int *stop) // it is able to record the last character
 {
     if (*i >= len)
     {
@@ -533,12 +532,69 @@ void parseStartTag(char *data, Bcs bcs, int len, DataBuf *dataBuf)
         } //因为多加了1个1，所以跳过了多个属性值时，属性间的空格
         else if (data[i] == '>')
         {
-            break;
+            if (i + 1 == len)
+            {
+                break;
+            }
+            else
+            {
+                Event *event = &(dataBuf->eventStream[dataBuf->eventIndex++]);
+                //(Event *)malloc(sizeof(Event));
+                event->type = CD; //name
+                event->startPos = i + 1;
+                event->stopPos = len;
+                break;
+                //event->startPos2 = attValueStart;
+                //event->stopPos2 = attValueStop;
+            }
             //printf("false\n");
         }
     }
 }
-
+void parseComment(char *data, Bcs bcs, int len, DataBuf *dataBuf)
+{
+    int i = bcs.bufpos + 3;
+    Event *event = &(dataBuf->eventStream[dataBuf->eventIndex++]);
+    //(Event *)malloc(sizeof(Event));
+    event->type = COMMENT; //name
+    event->startPos = i + 1;
+    while (i + 3 < len && !(data[i++] == '-' && data[i++] == '-' && data[i++] == '>'))
+        ;
+    if (i == len)
+    {
+        errorState = INCOMPLETE;
+        return;
+    }
+    else
+    {
+        event->stopPos = i - 3;
+        return;
+    }
+}
+void parseEtag(char *data, Bcs bcs, int len, DataBuf *dataBuf)
+{
+    Event *event = &(dataBuf->eventStream[dataBuf->eventIndex++]);
+    event->type = ETAG;
+}
+void parseCDATA(char *data, Bcs bcs, int len, DataBuf *dataBuf)
+{
+    int i = bcs.bufpos + 8;
+    Event *event = &(dataBuf->eventStream[dataBuf->eventIndex++]);
+    event->type = CDATA;
+    event->startPos = i + 1;
+    while (i + 3 < len && !(data[i++] == ']' && data[i++] == ']' && data[i++] == '>'))
+        ;
+    if (i == len)
+    {
+        errorState = INCOMPLETE;
+        return;
+    }
+    else
+    {
+        event->stopPos = i - 3;
+        return;
+    }
+}
 void parseEvents(DataBuf *dataBuf, int len)
 {
     int i;
@@ -557,14 +613,84 @@ void parseEvents(DataBuf *dataBuf, int len)
                 }
                 //return;
             }
+            else
+            {
+                parseStartTag(dataBuf->buf, dataBuf->bcsay.bcs[i], len, dataBuf);
+                if (errorState != 0)
+                {
+                    printf("failure parseStartTag at %d\n", i);
+                    //error process further
+                }
+            }
+        }
+        else if (dataBuf->bcsay.bcs[i].bt == Etag_start)
+        {
+            if (i + 1 < dataBuf->bufnum)
+            {
+                //printf("first = %d, second = %d\n", dataBuf->bcsay.bcs[i].bufpos, dataBuf->bcsay.bcs[i+1].bufpos);
+                parseEtag(dataBuf->buf, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i + 1].bufpos, dataBuf);
+                if (errorState != 0)
+                {
+                    printf("failure parseEtag at %d\n", i);
+                    //error process further
+                }
+                //return;
+            }
+            else
+            {
+                parseEtag(dataBuf->buf, dataBuf->bcsay.bcs[i], len, dataBuf);
+                if (errorState != 0)
+                {
+                    printf("failure parseEtag at %d\n", i);
+                    //error process further
+                }
+            }
         }
         else if (dataBuf->bcsay.bcs[i].bt == COMMENT_start)
         {
-            i++;
+            if (i + 1 < dataBuf->bufnum)
+            {
+                //printf("first = %d, second = %d\n", dataBuf->bcsay.bcs[i].bufpos, dataBuf->bcsay.bcs[i+1].bufpos);
+                parseComment(dataBuf->buf, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i + 1].bufpos, dataBuf);
+                if (errorState != 0)
+                {
+                    printf("failure parseComment at %d\n", i);
+                    //error process further
+                }
+                //return;
+            }
+            else
+            {
+                parseComment(dataBuf->buf, dataBuf->bcsay.bcs[i], len, dataBuf);
+                if (errorState != 0)
+                {
+                    printf("failure parseComment at %d\n", i);
+                    //error process further
+                }
+            }
         }
         else if (dataBuf->bcsay.bcs[i].bt == CDSECT_start)
         {
-            i++;
+            if (i + 1 < dataBuf->bufnum)
+            {
+                //printf("first = %d, second = %d\n", dataBuf->bcsay.bcs[i].bufpos, dataBuf->bcsay.bcs[i+1].bufpos);
+                parseCDATA(dataBuf->buf, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i + 1].bufpos, dataBuf);
+                if (errorState != 0)
+                {
+                    printf("failure parseCDATA at %d\n", i);
+                    //error process further
+                }
+                //return;
+            }
+            else
+            {
+                parseCDATA(dataBuf->buf, dataBuf->bcsay.bcs[i], len, dataBuf);
+                if (errorState != 0)
+                {
+                    printf("failure parseCDATA at %d\n", i);
+                    //error process further
+                }
+            }
         }
         else if (dataBuf->bcsay.bcs[i].bt == PI_start)
         {

@@ -8,9 +8,9 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/testparse",
+            "program": "${workspaceFolder}/hpXmlParser",
             "args": [
-                "../test1.xml"
+                "./files/test1.xml"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

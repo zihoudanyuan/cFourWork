@@ -76,6 +76,10 @@ void traverseEventStream(XmlParserContext *pContext)
                 }
                 printf(" ");
             }
+            else if (event->type == ETAG)
+            {
+                printf("EE ");
+            }
             else if (event->type == ATTRIBUTE)
             {
                 printf("A ");
@@ -90,6 +94,33 @@ void traverseEventStream(XmlParserContext *pContext)
                 }
                 printf(" ");
             }
+            else if (event->type == CD)
+            {
+                printf("CD ");
+                for (int m = event->startPos; m < event->stopPos; m++)
+                {
+                    printf("%c", dataBuf->buf[m]);
+                }
+                printf(" ");
+            }
+            else if (event->type == COMMENT)
+            {
+                printf("C ");
+                for (int m = event->startPos; m < event->stopPos; m++)
+                {
+                    printf("%c", dataBuf->buf[m]);
+                }
+                printf(" ");
+            }
+            else if (event->type == CDATA)
+            {
+                printf("CD "); // how to sign
+                for (int m = event->startPos; m < event->stopPos; m++)
+                {
+                    printf("%c", dataBuf->buf[m]);
+                }
+                printf(" ");
+            }
         }
     }
 }
@@ -98,7 +129,7 @@ int main(int argc, char **argv)
 {
     if (argc != 2)
     {
-        printf("2 argument is necessray\n");
+        printf("2 parameters are required\nUsage: ./hpXmlParser filename\n");
         exit(1);
     }
     XmlParserContext *pContext = readXmlFile(argv[1]);
@@ -119,28 +150,22 @@ int main(int argc, char **argv)
         {
             preprocess(dataStart, dataBuf, size - it);
             dataBuf->bufLen = size - it;
-            parseEvents(dataBuf, size - it); //second parameter could be deleted
+            parseEvents(dataBuf, size - it); //TODO second parameter could be deleted
             it += (size - it);
             dataStart += (size - it);
-            //printf("dataBuf bufnum = %d\n", dataBuf->bufnum);
         }
-        else
-        { //process one whole block data
+        else //process one whole block data
+        {
             preprocess(dataStart, dataBuf, BUFLEN);
             dataBuf->bufLen = BUFLEN;
             parseEvents(dataBuf, BUFLEN);
             it += BUFLEN;
             dataStart += BUFLEN;
-            //break;  //simply for test
         }
         pContext->dataBufList[pContext->dataBufIndex++] = dataBuf;
     }
-    //printf("dataBufIndex = %d\n", pContext->dataBufIndex);
-
-    //printf("eventIndex = %d\n", pContext->dataBufList[0]->eventIndex);
 
     //traverseDataBuf(pContext);
-
     traverseEventStream(pContext);
     freeResource(pContext);
 

@@ -3,5 +3,6 @@
 #include "base.h"
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 void preprocess(char *data, DataBuf *dataBuf, int len);
 #endif

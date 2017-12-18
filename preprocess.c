@@ -1,5 +1,5 @@
 #include "preprocess.h"
-#include <stdio.h>
+
 void preprocessEndTag(DataBuf *dataBuf, int *pos)
 {
     int bufNum = dataBuf->bufnum++;
@@ -25,37 +25,39 @@ void preprocessCommentCDATA(DataBuf *dataBuf, int *pos, int len)
     int i = *pos + 1;
     char *data = dataBuf->buf;
     assert(data[i] == '!');
-    if (i + 2 < len && data[i + 1] == '-' && data[i + 2] == '-')
+    if (i + 2 < len && data[i + 1] == '-' && data[i + 2] == '-') //COMMENT
     {
         i += 3;
         //(*pos) = i;
         assert(i < len); //TODO make sure about it
         dataBuf->bcsay.bcs[bufNum].bt = COMMENT_start;
-        dataBuf->bcsay.bcs[bufNum].bufpos = *pos; //COMMENT
+        dataBuf->bcsay.bcs[bufNum].bufpos = *pos;
         while (i + 3 < len && !(data[i++] == '-' && data[i++] == '-' && data[i++] == '>'))
             ;
-        *pos = i;
+
         if (i == len)
         { //TODO amend this extreme condition
             //结尾在之后的数据块
             assert(0);
         }
+        *pos = i;
     }
-    else if (i + 6 < len && data[i + 1] == '[' && data[i + 2] == 'C' && data[i + 3] == 'D' && data[i + 4] == 'A' && data[i + 5] == 'T' && data[i + 6] == 'A')
+    else if (i + 7 < len && data[i + 1] == '[' && data[i + 2] == 'C' && data[i + 3] == 'D' && data[i + 4] == 'A' && data[i + 5] == 'T' && data[i + 6] == 'A' && data[i + 7] == '[') //[CDATA[
     {
-        i += 7;
+        i += 8;
         //(*pos) = i;
         assert(i < len);
         dataBuf->bcsay.bcs[bufNum].bt = CDSECT_start;
-        dataBuf->bcsay.bcs[bufNum].bufpos = *pos; //[CDATA[
+        dataBuf->bcsay.bcs[bufNum].bufpos = *pos;
 
         while (i + 3 < len && !(data[i++] == ']' && data[i++] == ']' && data[i++] == '>'))
             ;
-        *pos = i;
+
         if (i == len)
         { //TODO amend this extreme condition
             assert(0);
         }
+        *pos = i;
     }
 }
 
@@ -91,34 +93,26 @@ void preprocess(char *data, DataBuf *dataBuf, int len)
     {
         if (data[i] == '<')
         {
-            //assert(i+1 != len);
+            assert(i + 1 != len);
             switch (data[i + 1])
             {
-            case '/':
+            case '/': //endtag
             {
-                //endtag
                 preprocessEndTag(dataBuf, &i);
-                //++i;
                 break;
             }
-            case '?':
+            case '?': //start PI
             {
-                //start PI
                 preprocessPI(dataBuf, &i, len);
-                //++i;
                 break;
             }
-            case '!':
+            case '!': //comment or cdata
             {
-                //comment or cdata
                 preprocessCommentCDATA(dataBuf, &i, len);
-                //++i;
                 break;
             }
-            default:
+            default: //start or empty
             {
-                //++i;
-                //start or empty
                 preprocessStartOrEmpty(dataBuf, &i);
             }
             }
