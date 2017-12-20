@@ -60,7 +60,7 @@ typedef struct Bcs
 {
     //int fileoffset;
     int bufnum;
-    int bufpos;
+    int bufpos; // relative offset
     Bcstype bt;
 } Bcs;
 
@@ -77,7 +77,8 @@ typedef struct Bcsarray
 
 typedef struct DataBuf
 {
-    char buf[BUFLEN];
+    char buf[BUFLEN]; // abandone
+    //char *buf;
     Bcsarray bcsay;
     int bufnum; //start from 0 //TODO rename
     int bufLen; //start from 1
@@ -87,6 +88,7 @@ typedef struct DataBuf
     int startOffset;
     char *bufStart;
     int dataBufLen;
+    int bcsNum; //start from 1
     // int FINISH_STAGE0;
     // int START_STAGE0;
     // int FINISH_STAGE1;
