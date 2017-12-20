@@ -34,13 +34,16 @@ void preprocessCommentCDATA(DataBuf *dataBuf, int *pos, int len)
         dataBuf->bcsay.bcs[bufNum].bufpos = *pos;
         while (i + 3 < len && !(data[i++] == '-' && data[i++] == '-' && data[i++] == '>'))
             ;
-
         if (i == len)
-        { //TODO amend this extreme condition
-            //结尾在之后的数据块
-            assert(0);
+        {
+            //assert(0);
+            unFinishedType = COMMENT_start;
+            return;
         }
-        *pos = i;
+        else
+        {
+            *pos = i;
+        }
     }
     else if (i + 7 < len && data[i + 1] == '[' && data[i + 2] == 'C' && data[i + 3] == 'D' && data[i + 4] == 'A' && data[i + 5] == 'T' && data[i + 6] == 'A' && data[i + 7] == '[') //[CDATA[
     {
@@ -55,9 +58,14 @@ void preprocessCommentCDATA(DataBuf *dataBuf, int *pos, int len)
 
         if (i == len)
         { //TODO amend this extreme condition
-            assert(0);
+            //assert(0);
+            unFinishedType = CDSECT_start;
+            return;
         }
-        *pos = i;
+        else
+        {
+            *pos = i;
+        }
     }
 }
 
@@ -77,23 +85,82 @@ void preprocessPI(DataBuf *dataBuf, int *pos, int len)
         dataBuf->bcsay.bcs[bufNum].bufpos = *pos; //PI
         while (i + 2 < len && !(data[i++] == '?' && data[i++] == '>'))
             ;
-        *pos = i;
         if (i == len)
         { //TODO amend this extreme condition
-            assert(0);
+            //assert(0);
+            unFinishedType = PI_start;
+        }
+        else
+        {
+            *pos = i;
         }
     }
 }
 
-void preprocess(char *data, DataBuf *dataBuf, int len)
+void preprocess(char *data, DataBuf *dataBuf, int len, int *start)
 {
     memcpy(dataBuf->buf, data, len);
     int i = 0;
+    //handle last unFinished element
+    // if (0 != unFinishedType)
+    // {
+    //     if (unFinishedType == COMMENT_start)
+    //     {
+    //         while (i + 3 < len && !(data[i++] == '-' && data[i++] == '-' && data[i++] == '>'))
+    //             ;
+    //         if (i == len)
+    //         {
+    //             //assert(0);
+    //             //unFinishedType = COMMENT_start;
+    //             return;
+    //         }
+    //         else
+    //         {
+    //             unFinishedType = 0; //TODO rename to a constant variable
+    //         }
+    //     }
+    //     else if (unFinishedType == CDSECT_start)
+    //     {
+    //         while (i + 3 < len && !(data[i++] == ']' && data[i++] == ']' && data[i++] == '>'))
+    //             ;
+    //         if (i == len)
+    //         {
+    //             //assert(0);
+    //             // unFinishedType = COMMENT_start;
+    //             return;
+    //         }
+    //         else
+    //         {
+    //             unFinishedType = 0; //TODO rename to a constant variable
+    //         }
+    //     }
+    //     else if (unFinishedType == PI_start)
+    //     {
+    //         // while (i + 3 < len && !(data[i++] == ']' && data[i++] == ']' && data[i++] == '>'))
+    //         //     ;
+    //         while (i + 2 < len && !(data[i++] == '?' && data[i++] == '>'))
+    //             ;
+
+    //         if (i == len)
+    //         {
+    //             //assert(0);
+    //             // unFinishedType = COMMENT_start;
+    //             return;
+    //         }
+    //         else
+    //         {
+    //             unFinishedType = 0; //TODO rename to a constant variable
+    //         }
+    //     }
+    // }
     while (i < len)
     {
         if (data[i] == '<')
         {
-            assert(i + 1 != len);
+            //assert(i + 1 != len);
+            if (i + 1 >= len)
+            {
+            }
             switch (data[i + 1])
             {
             case '/': //endtag

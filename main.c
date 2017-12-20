@@ -42,23 +42,25 @@ void traverseDataBuf(XmlParserContext *pContext)
     {
         for (int k = 0; k < pContext->dataBufList[i]->bufnum; ++k)
         {
-            int startPos = pContext->dataBufList[i]->bcsay.bcs[k].bufpos;
-            int endPos;
-            if (k + 1 < pContext->dataBufList[i]->bufnum)
-            {
-                endPos = pContext->dataBufList[i]->bcsay.bcs[k + 1].bufpos;
-            }
-            else
-            {
-                endPos = pContext->dataBufList[i]->bufLen;
-            }
-            for (int l = startPos; l < endPos; l++)
-            {
-                printf("%c", pContext->dataBufList[i]->buf[l]);
-            }
+            // int startPos = pContext->dataBufList[i]->bcsay.bcs[k].bufpos;
+            // int endPos;
+            // if (k + 1 < pContext->dataBufList[i]->bufnum)
+            // {
+            //     endPos = pContext->dataBufList[i]->bcsay.bcs[k + 1].bufpos;
+            // }
+            // else
+            // {
+            //     endPos = pContext->dataBufList[i]->bufLen;
+            // }
+            // for (int l = startPos; l < endPos; l++)
+            // {
+            //     printf("%c", pContext->dataBufList[i]->buf[l]);
+            // }
+            printf("dataBufIndex = %d, bcs_type = %d\n", i, pContext->dataBufList[i]->bcsay.bcs[k].bt);
         }
     }
 }
+
 void traverseEventStream(XmlParserContext *pContext)
 {
     for (int i = 0; i < pContext->dataBufIndex; ++i)
@@ -114,7 +116,7 @@ void traverseEventStream(XmlParserContext *pContext)
             }
             else if (event->type == CDATA)
             {
-                printf("CD "); // how to sign
+                printf("CDATA "); // how to sign
                 for (int m = event->startPos; m < event->stopPos; m++)
                 {
                     printf("%c", dataBuf->buf[m]);
@@ -145,28 +147,38 @@ int main(int argc, char **argv)
         DataBuf *dataBuf = (DataBuf *)malloc(sizeof(DataBuf));
         dataBuf->bufnum = 0;
         dataBuf->eventIndex = 0;
+
         memset(dataBuf, 0, sizeof(DataBuf));
         if (size - it < BUFLEN)
         {
-            preprocess(dataStart, dataBuf, size - it);
+            preprocess(dataStart, dataBuf, size - it, &it);
             dataBuf->bufLen = size - it;
-            parseEvents(dataBuf, size - it); //TODO second parameter could be deleted
+            dataBuf->bufStart = dataStart;
+            dataBuf->dataBufLen = size - it;
+            dataBuf->startOffset = it;
+            //parseEvents(dataBuf, size - it); //TODO second parameter could be deleted
             it += (size - it);
             dataStart += (size - it);
+            printf("there\n");
         }
         else //process one whole block data
         {
-            preprocess(dataStart, dataBuf, BUFLEN);
+            preprocess(dataStart, dataBuf, BUFLEN, &it);
             dataBuf->bufLen = BUFLEN;
-            parseEvents(dataBuf, BUFLEN);
+            dataBuf->bufStart = dataStart;
+            dataBuf->dataBufLen = size - it;
+            dataBuf->startOffset = it;
+
+            //parseEvents(dataBuf, BUFLEN);
             it += BUFLEN;
             dataStart += BUFLEN;
+            printf("here\n");
         }
         pContext->dataBufList[pContext->dataBufIndex++] = dataBuf;
     }
 
-    //traverseDataBuf(pContext);
-    traverseEventStream(pContext);
+    traverseDataBuf(pContext);
+    //traverseEventStream(pContext);
     freeResource(pContext);
 
     return 0;

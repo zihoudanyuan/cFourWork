@@ -79,11 +79,14 @@ typedef struct DataBuf
 {
     char buf[BUFLEN];
     Bcsarray bcsay;
-    int bufnum; //start from 0
+    int bufnum; //start from 0 //TODO rename
     int bufLen; //start from 1
     //EventStream eventStream;
     int eventIndex;
     Event eventStream[BUFLEN / 10];
+    int startOffset;
+    char *bufStart;
+    int dataBufLen;
     // int FINISH_STAGE0;
     // int START_STAGE0;
     // int FINISH_STAGE1;
