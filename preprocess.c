@@ -16,6 +16,89 @@ void preprocessStartOrEmpty(DataBuf *dataBuf, int *pos)
     //printf("bufpos = %d\n", dataBuf->bcsay.bcs[bcsNum].bufpos);
 }
 
+void preprocessEndTagComplete(DataBuf *dataBuf, int *pos, int fpLen)
+{
+    if (*pos < fpLen)
+    {
+        (*pos)++;
+        return;
+    }
+    int bcsNum = dataBuf->bcsNum++;
+    dataBuf->bcsay.bcs[bcsNum].bt = Etag_start;
+    dataBuf->bcsay.bcs[bcsNum].bufpos = ((*pos)++ - fpLen);
+    // printf("pos = %d\n", *pos - 1);
+    (*pos)++;
+}
+
+void preprocessStartOrEmptyComplete(DataBuf *dataBuf, int *pos, int fpLen)
+{
+    if (*pos < fpLen)
+    {
+        (*pos)++;
+        return;
+    }
+    int bcsNum = dataBuf->bcsNum++;
+    dataBuf->bcsay.bcs[bcsNum].bt = StagorEmptytag_start;
+    dataBuf->bcsay.bcs[bcsNum].bufpos = ((*pos)++ - fpLen);
+    //printf("bufpos = %d\n", dataBuf->bcsay.bcs[bcsNum].bufpos);
+    (*pos)++;
+}
+
+void preprocessCommentCDATAComplete(DataBuf *dataBuf, int *pos, int len, char *data, int fpLen)
+{
+    //int bufNum = dataBuf->bufnum;
+    //(*pos)++;
+    int i = *pos + 1; //pos points at <
+    //char *data = dataBuf->bufStart;
+    //assert(data[i] == '!');
+    //if (i + 2 < len && data[i + 1] == '-' && data[i + 2] == '-') //COMMENT
+    if (i + 1 < len && data[i + 1] == '-')
+    {
+        i += 3;
+        //(*pos) = i;
+        // while (i + 3 < len && !(data[i++] == '-' && data[i++] == '-' && data[i++] == '>'))
+        //     ;
+        if (*pos >= fpLen)
+        {
+            int bcsNum = dataBuf->bcsNum++;
+            dataBuf->bcsay.bcs[bcsNum].bt = COMMENT_start;
+            dataBuf->bcsay.bcs[bcsNum].bufpos = *pos - fpLen; //dataBuf inner offset
+        }
+
+        while (i + 2 < len && !(data[i] == '-' && data[i + 1] == '-' && data[i + 2] == '>'))
+        {
+            i++;
+        }
+
+        *pos = i;
+    }
+    // else if (i + 7 < len && data[i + 1] == '[' && data[i + 2] == 'C' && data[i + 3] == 'D' && data[i + 4] == 'A' && data[i + 5] == 'T' && data[i + 6] == 'A' && data[i + 7] == '[') //[CDATA[
+    else if (i + 1 < len && data[i + 1] == '[')
+    {
+        i += 8;
+        //(*pos) = i;
+        if (*pos >= fpLen)
+        {
+            int bcsNum = dataBuf->bcsNum++;
+            dataBuf->bcsay.bcs[bcsNum].bt = CDSECT_start;
+            dataBuf->bcsay.bcs[bcsNum].bufpos = *pos - fpLen;
+        }
+
+        // while (i + 3 < len && !(data[i++] == ']' && data[i++] == ']' && data[i++] == '>'))
+        //     ;
+        while (i + 2 < len && !(data[i] == ']' && data[i + 1] == ']' && data[i + 2] == '>'))
+        {
+            i++;
+        }
+
+        *pos = i;
+    }
+    else
+    {
+        *pos = i; //if can't distinguish comment and cdata, then we will not treat this as bcs.
+        // This happens when '<!' is at the end of databuf.Ignore the Wrong situation.
+    }
+}
 //<!--This element indicates whether age<40.-->
 //CDATA 部分由 "<![CDATA[" 开始，由 "]]>" 结束：
 void preprocessCommentCDATA(DataBuf *dataBuf, int *pos, int len, char *data)
@@ -68,6 +151,40 @@ void preprocessCommentCDATA(DataBuf *dataBuf, int *pos, int len, char *data)
     }
 }
 
+void preprocessPIComplete(DataBuf *dataBuf, int *pos, int len, char *data, int fpLen)
+{
+    if (*pos >= fpLen)
+    {
+        int bcsNum = dataBuf->bcsNum++;
+        dataBuf->bcsay.bcs[bcsNum].bt = PI_start;
+        dataBuf->bcsay.bcs[bcsNum].bufpos = (*pos - fpLen); //PI
+    }
+    //(*pos)++;
+    int i = *pos + 1;
+    //char *data = dataBuf->buf;
+    //assert(data[i] == '?');
+    // if (i < len && data[i] == '?')
+    // {
+    // i += 1;
+    //(*pos)++;
+    // while (i + 2 < len && !(data[i++] == '?' && data[i++] == '>'))
+    //     ;
+    while (i + 2 < len && !(data[i + 1] == '?' && data[i + 2] == '>'))
+    {
+        i++;
+    }
+    // if (i == len)
+    // { //TODO amend this extreme condition
+    //     //assert(0);
+    //     unFinishedType = PI_start;
+    // }
+    // else
+    // {
+    *pos = i;
+    // }
+    // }
+}
+
 //<?page render multiple authors ?>
 void preprocessPI(DataBuf *dataBuf, int *pos, int len, char *data)
 {
@@ -99,7 +216,8 @@ void preprocessPI(DataBuf *dataBuf, int *pos, int len, char *data)
     // }
     // }
 }
-void preprocess(char *data, DataBuf *dataBuf, int len)
+
+void preprocess(char *data, DataBuf *dataBuf, int len, int fpLen)
 {
     //memcpy(dataBuf->buf, data, len);
     int i = 0;
@@ -157,7 +275,7 @@ void preprocess(char *data, DataBuf *dataBuf, int len)
     // }
     while (i < len)
     {
-        if (data[i] == '<')
+        if (data[i] == '<') // whether = is needed
         {
             //assert(i + 1 != len);
             if (i + 1 >= len)
@@ -169,22 +287,22 @@ void preprocess(char *data, DataBuf *dataBuf, int len)
             {
             case '/': //endtag
             {
-                preprocessEndTag(dataBuf, &i);
+                preprocessEndTagComplete(dataBuf, &i, fpLen);
                 break;
             }
             case '?': //start PI
             {
-                preprocessPI(dataBuf, &i, len, data);
+                preprocessPIComplete(dataBuf, &i, len, data, fpLen);
                 break;
             }
             case '!': //comment or cdata
             {
-                preprocessCommentCDATA(dataBuf, &i, len, data);
+                preprocessCommentCDATAComplete(dataBuf, &i, len, data, fpLen);
                 break;
             }
             default: //start or empty
             {
-                preprocessStartOrEmpty(dataBuf, &i);
+                preprocessStartOrEmptyComplete(dataBuf, &i, fpLen);
             }
             }
         }

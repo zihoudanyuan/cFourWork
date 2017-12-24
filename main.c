@@ -128,10 +128,11 @@ void traverseEventStream(XmlParserContext *pContext)
     }
 }
 
-void findLastBcs(XmlParserContext *pContext, char **dataBufStart, int *offset, int *bcsLen)
+void findLastBcs(XmlParserContext *pContext, char **dataBufStart, int *offset, int *bcsLen, DataBuf **lastDataBuf)
 {
     int nowDataBuf = pContext->dataBufIndex;
     DataBuf *dataBuf = pContext->dataBufList[nowDataBuf];
+    *lastDataBuf = dataBuf;
     int bcsIndex = dataBuf->bcsNum - 1;
     Bcs *bcs = &(dataBuf->bcsay.bcs[bcsIndex]);
     *dataBufStart = dataBuf->bufStart; //knowledge amend pointer with double pointer
@@ -171,7 +172,7 @@ int main(int argc, char **argv)
             if (size - it < BUFLEN)
             {
                 memcpy(secondPartBuf, dataStart, size - it);
-                preprocess(secondPartBuf, dataBuf, size - it);
+                preprocess(secondPartBuf, dataBuf, size - it, 0);
                 dataStart += (size - it);
                 dataBuf->dataBufLen = size - it;
                 dataBuf->bufLen = size - it;
@@ -180,7 +181,7 @@ int main(int argc, char **argv)
             else
             {
                 memcpy(secondPartBuf, dataStart, BUFLEN);
-                preprocess(secondPartBuf, dataBuf, BUFLEN);
+                preprocess(secondPartBuf, dataBuf, BUFLEN, 0);
                 it += BUFLEN;
                 dataBuf->dataBufLen = BUFLEN;
                 dataBuf->bufLen = BUFLEN;
@@ -202,8 +203,9 @@ int main(int argc, char **argv)
                                            //printf("%p %p\n", dataBuf->bufStart, dataStart);
             char *dataBufStart;
             int offset, bcsLen;
+            DataBuf *lastDataBuf;
             //assert the xml one data less than fixed size
-            findLastBcs(pContext, &dataBufStart, &offset, &bcsLen);
+            findLastBcs(pContext, &dataBufStart, &offset, &bcsLen, &lastDataBuf);
             // printf("offset = %d, bcsLen = %d ", offset, bcsLen);
             //printf("dataBufStart = %s\n", dataBufStart);
             if (size - it < BUFLEN)
@@ -212,8 +214,8 @@ int main(int argc, char **argv)
                 memset(secondPartBuf, 0, BUFLEN);
                 memcpy(secondPartBuf, dataStart, size - it);
                 memcpy(&firstPartBuf[BUFLEN - bcsLen], &dataBufStart[offset], bcsLen);
-                printf("firstPartBuf = %s\n", &firstPartBuf[BUFLEN - bcsLen]);
-                preprocess(&firstPartBuf[BUFLEN - bcsLen], dataBuf, size - it + bcsLen);
+                // printf("firstPartBuf = %s\n", &firstPartBuf[BUFLEN - bcsLen]);
+                preprocess(&firstPartBuf[BUFLEN - bcsLen], dataBuf, size - it + bcsLen, bcsLen);
                 // preprocess(secondPartBuf, dataBuf, size - it);
                 dataStart += (size - it);
                 dataBuf->dataBufLen = size - it;
@@ -297,7 +299,7 @@ int main(int argc, char **argv)
         printf("%d bcsNum = %d\n", i, pContext->dataBufList[i]->bcsNum);
     }
     // printf("bcsNum = %d\n", pContext->dataBufList[0]->bcsNum);
-    // traverseDataBuf(pContext);
+    traverseDataBuf(pContext);
 
     // int i = 0, k = 4;
     // int startPos = pContext->dataBufList[i]->bcsay.bcs[k].bufpos;
