@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/hpXmlParser",
             "args": [
-                "./files/test1.xml"
+                "./files/testdata.xml"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
