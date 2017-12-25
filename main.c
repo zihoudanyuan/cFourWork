@@ -62,20 +62,52 @@ void traverseDataBuf(XmlParserContext *pContext)
     }
 }
 
+void traverseDataBufN(XmlParserContext *pContext)
+{
+
+    for (int i = 0; i <= pContext->dataBufIndex; ++i)
+    {
+        for (int k = 0; k < pContext->dataBufList[i]->bcsNum; ++k)
+        {
+            int startPos = pContext->dataBufList[i]->bcsay.bcs[k].bufpos;
+            int endPos = startPos + pContext->dataBufList[i]->bcsay.bcs[k].bcsLen;
+            // if (k + 1 < pContext->dataBufList[i]->bcsNum)
+            // {
+            //     endPos = pContext->dataBufList[i]->bcsay.bcs[k + 1].bufpos;
+            // }
+            // else
+            // {
+            //     endPos = pContext->dataBufList[i]->bufLen;
+            // }
+            printf("start = %d, end = %d\n", startPos, endPos);
+            // for (int l = startPos; l <= endPos; l++)
+            // {
+            //     //printf("%c", pContext->dataBufList[i]->buf[l]);
+            //     printf("%c", pContext->dataBufList[i]->bufStart[l]);
+            // }
+            //printf("dataBufIndex = %d, bcs_type = %d\n", i, pContext->dataBufList[i]->bcsay.bcs[k].bt);
+        }
+    }
+}
+
 void traverseEventStream(XmlParserContext *pContext)
 {
-    for (int i = 0; i < pContext->dataBufIndex; ++i)
+    for (int i = 0; i <= pContext->dataBufIndex; ++i)
     {
         for (int k = 0; k < pContext->dataBufList[i]->eventIndex; ++k)
         {
             DataBuf *dataBuf = pContext->dataBufList[i];
             Event *event = &(dataBuf->eventStream[k]);
+            // char *data = dataBuf->buf;
+            char *data = dataBuf->bufStart;
+            //printf("data = %s\n", data);
             if (event->type == STAG)
             {
                 printf("SE ");
+                //printf("startPos = %d, stopPos = %d\n", event->startPos, event->stopPos);
                 for (int m = event->startPos; m < event->stopPos; m++)
                 {
-                    printf("%c", dataBuf->buf[m]);
+                    printf("%c", data[m]);
                 }
                 printf(" ");
             }
@@ -88,12 +120,12 @@ void traverseEventStream(XmlParserContext *pContext)
                 printf("A ");
                 for (int m = event->startPos; m < event->stopPos; m++)
                 {
-                    printf("%c", dataBuf->buf[m]);
+                    printf("%c", data[m]);
                 }
                 printf(" ");
                 for (int m = event->startPos2; m < event->stopPos2; m++)
                 {
-                    printf("%c", dataBuf->buf[m]);
+                    printf("%c", data[m]);
                 }
                 printf(" ");
             }
@@ -102,7 +134,7 @@ void traverseEventStream(XmlParserContext *pContext)
                 printf("CD ");
                 for (int m = event->startPos; m < event->stopPos; m++)
                 {
-                    printf("%c", dataBuf->buf[m]);
+                    printf("%c", data[m]);
                 }
                 printf(" ");
             }
@@ -111,7 +143,7 @@ void traverseEventStream(XmlParserContext *pContext)
                 printf("C ");
                 for (int m = event->startPos; m < event->stopPos; m++)
                 {
-                    printf("%c", dataBuf->buf[m]);
+                    printf("%c", data[m]);
                 }
                 printf(" ");
             }
@@ -120,12 +152,13 @@ void traverseEventStream(XmlParserContext *pContext)
                 printf("CDATA "); // how to sign
                 for (int m = event->startPos; m < event->stopPos; m++)
                 {
-                    printf("%c", dataBuf->buf[m]);
+                    printf("%c", data[m]);
                 }
                 printf(" ");
             }
         }
     }
+    printf("\n");
 }
 
 void findLastBcs(XmlParserContext *pContext, char **dataBufStart, int *offset, int *bcsLen, DataBuf **lastDataBuf)
@@ -172,7 +205,7 @@ int main(int argc, char **argv)
             if (size - it < BUFLEN)
             {
                 memcpy(secondPartBuf, dataStart, size - it);
-                preprocess(secondPartBuf, dataBuf, size - it, 0);
+                preprocess(secondPartBuf, dataBuf, size - it, 0, NULL);
                 dataStart += (size - it);
                 dataBuf->dataBufLen = size - it;
                 dataBuf->bufLen = size - it;
@@ -181,7 +214,7 @@ int main(int argc, char **argv)
             else
             {
                 memcpy(secondPartBuf, dataStart, BUFLEN);
-                preprocess(secondPartBuf, dataBuf, BUFLEN, 0);
+                preprocess(secondPartBuf, dataBuf, BUFLEN, 0, NULL);
                 it += BUFLEN;
                 dataBuf->dataBufLen = BUFLEN;
                 dataBuf->bufLen = BUFLEN;
@@ -189,6 +222,7 @@ int main(int argc, char **argv)
             }
             //preprocess(secondPartBuf, dataBuf, size - it);
             pContext->dataBufList[++pContext->dataBufIndex] = dataBuf;
+            //parseEvents(dataBuf, dataBuf->dataBufLen);
             //printf("%p %p\n", dataBuf->bufStart, dataStart);
             //break;
         }
@@ -215,8 +249,7 @@ int main(int argc, char **argv)
                 memcpy(secondPartBuf, dataStart, size - it);
                 memcpy(&firstPartBuf[BUFLEN - bcsLen], &dataBufStart[offset], bcsLen);
                 // printf("firstPartBuf = %s\n", &firstPartBuf[BUFLEN - bcsLen]);
-                preprocess(&firstPartBuf[BUFLEN - bcsLen], dataBuf, size - it + bcsLen, bcsLen);
-                // preprocess(secondPartBuf, dataBuf, size - it);
+                preprocess(&firstPartBuf[BUFLEN - bcsLen], dataBuf, size - it + bcsLen, bcsLen, lastDataBuf);
                 dataStart += (size - it);
                 dataBuf->dataBufLen = size - it;
                 dataBuf->bufLen = size - it;
@@ -224,16 +257,18 @@ int main(int argc, char **argv)
             }
             else
             {
-                assert(0);
-                // memcpy(secondPartBuf, dataStart, BUFLEN);
-                // preprocess(secondPartBuf, dataBuf, BUFLEN);
-                // it += BUFLEN;
-                // dataBuf->dataBufLen = BUFLEN;
-                // dataBuf->bufLen = size - it;
-                // dataStart += BUFLEN;
+                memset(secondPartBuf, 0, BUFLEN);
+                memcpy(secondPartBuf, dataStart, BUFLEN);
+                memcpy(&firstPartBuf[BUFLEN - bcsLen], &dataBufStart[offset], bcsLen);
+                // printf("firstPartBuf = %s\n", &firstPartBuf[BUFLEN - bcsLen]);
+                preprocess(&firstPartBuf[BUFLEN - bcsLen], dataBuf, BUFLEN + bcsLen, bcsLen, lastDataBuf);
+                dataStart += BUFLEN;
+                dataBuf->dataBufLen = BUFLEN;
+                dataBuf->bufLen = BUFLEN;
+                it += BUFLEN;
             }
-            //preprocess(secondPartBuf, dataBuf, size - it);
             pContext->dataBufList[++pContext->dataBufIndex] = dataBuf;
+            //parseEvents(dataBuf, dataBuf->dataBufLen);
             //printf("%p %p\n", dataBuf->bufStart, dataStart);
             //break;
         }
@@ -296,10 +331,24 @@ int main(int argc, char **argv)
 
     for (int i = 0; i <= pContext->dataBufIndex; i++)
     {
-        printf("%d bcsNum = %d\n", i, pContext->dataBufList[i]->bcsNum);
+        parseEvents(pContext->dataBufList[i], 0);
     }
+
+    // for (int i = 0; i <= pContext->dataBufIndex; i++)
+    // {
+    //     printf("%d bcsNum = %d\n", i, pContext->dataBufList[i]->bcsNum);
+    // }
+    // printf("eventIndex = %d\n", pContext->dataBufList[0]->eventIndex);
     // printf("bcsNum = %d\n", pContext->dataBufList[0]->bcsNum);
-    traverseDataBuf(pContext);
+    // traverseDataBuf(pContext);
+    //traverseDataBufN(pContext);
+    // traverseEventStream(pContext);
+    // for (int i = 0; i <= pContext->dataBufIndex; ++i)
+    // {
+    //     for (int k = 0; k < pContext->dataBufList[i]->eventIndex; ++k)
+    //     {
+    //     }
+    // }
 
     // int i = 0, k = 4;
     // int startPos = pContext->dataBufList[i]->bcsay.bcs[k].bufpos;

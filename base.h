@@ -2,7 +2,7 @@
 #define BASE_H
 
 #include <stdio.h>
-#define BUFLEN 1024
+#define BUFLEN 10240
 #define TRUE 1
 #define FALSE 0
 #define INCOMPLETE 2
@@ -62,6 +62,7 @@ typedef struct Bcs
     int bufnum;
     int bufpos; // relative offset
     Bcstype bt;
+    int bcsLen;
 } Bcs;
 
 typedef struct Bcsarray

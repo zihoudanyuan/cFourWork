@@ -467,15 +467,14 @@ void parseStartTag(char *data, Bcs bcs, int len, DataBuf *dataBuf)
     {
         i++;
     }
-    if (i >= len)
-    {
-        errorState = INCOMPLETE;
-        return;
-    }
+    // if (i >= len)
+    // {
+    //     errorState = INCOMPLETE;
+    //     return;
+    // }
     int nameEnd = i;
     Event *event = &(dataBuf->eventStream[dataBuf->eventIndex++]);
-    //(Event *)malloc(sizeof(Event));
-    event->type = STAG; //name
+    event->type = STAG;
     event->startPos = nameStart;
     event->stopPos = nameEnd;
 
@@ -598,99 +597,112 @@ void parseCDATA(char *data, Bcs bcs, int len, DataBuf *dataBuf)
 void parseEvents(DataBuf *dataBuf, int len)
 {
     int i;
-    for (i = 0; i < dataBuf->bufnum; ++i)
+    for (i = 0; i < dataBuf->bcsNum; ++i)
     {
+        int a = 5;
         if (dataBuf->bcsay.bcs[i].bt == StagorEmptytag_start)
         {
-            if (i + 1 < dataBuf->bufnum)
+            // printf("40==== %d,%d\n", dataBuf->bcsay.bcs[i].bufpos, dataBuf->bcsay.bcs[i].bcsLen);
+            parseStartTag(dataBuf->bufStart, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i].bufpos + dataBuf->bcsay.bcs[i].bcsLen, dataBuf);
+            if (errorState != 0)
             {
-                //printf("first = %d, second = %d\n", dataBuf->bcsay.bcs[i].bufpos, dataBuf->bcsay.bcs[i+1].bufpos);
-                parseStartTag(dataBuf->buf, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i + 1].bufpos, dataBuf);
-                if (errorState != 0)
-                {
-                    printf("failure parseStartTag at %d\n", i);
-                    //error process further
-                }
-                //return;
+                printf("failure parseStartTag at %d\n", i);
+                //error process further
             }
-            else
-            {
-                parseStartTag(dataBuf->buf, dataBuf->bcsay.bcs[i], len, dataBuf);
-                if (errorState != 0)
-                {
-                    printf("failure parseStartTag at %d\n", i);
-                    //error process further
-                }
-            }
+
+            // if (i + 1 < dataBuf->bufnum)
+            // {
+            //     //printf("first = %d, second = %d\n", dataBuf->bcsay.bcs[i].bufpos, dataBuf->bcsay.bcs[i+1].bufpos);
+            //     // parseStartTag(dataBuf->buf, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i + 1].bufpos, dataBuf);
+            //     parseStartTag(dataBuf->bufStart, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i + 1].bufpos, dataBuf);
+            //     if (errorState != 0)
+            //     {
+            //         printf("failure parseStartTag at %d\n", i);
+            //         //error process further
+            //     }
+            //     //return;
+            // }
+            // else
+            // {
+            //     parseStartTag(dataBuf->buf, dataBuf->bcsay.bcs[i], len, dataBuf);
+            //     if (errorState != 0)
+            //     {
+            //         printf("failure parseStartTag at %d\n", i);
+            //         //error process further
+            //     }
+            // }
         }
         else if (dataBuf->bcsay.bcs[i].bt == Etag_start)
         {
-            if (i + 1 < dataBuf->bufnum)
-            {
-                //printf("first = %d, second = %d\n", dataBuf->bcsay.bcs[i].bufpos, dataBuf->bcsay.bcs[i+1].bufpos);
-                parseEtag(dataBuf->buf, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i + 1].bufpos, dataBuf);
-                if (errorState != 0)
-                {
-                    printf("failure parseEtag at %d\n", i);
-                    //error process further
-                }
-                //return;
-            }
-            else
-            {
-                parseEtag(dataBuf->buf, dataBuf->bcsay.bcs[i], len, dataBuf);
-                if (errorState != 0)
-                {
-                    printf("failure parseEtag at %d\n", i);
-                    //error process further
-                }
-            }
+            parseEtag(dataBuf->bufStart, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i].bufpos + dataBuf->bcsay.bcs[i].bcsLen, dataBuf);
+            // if (i + 1 < dataBuf->bufnum)
+            // {
+            //     //printf("first = %d, second = %d\n", dataBuf->bcsay.bcs[i].bufpos, dataBuf->bcsay.bcs[i+1].bufpos);
+            //     parseEtag(dataBuf->buf, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i + 1].bufpos, dataBuf);
+            //     if (errorState != 0)
+            //     {
+            //         printf("failure parseEtag at %d\n", i);
+            //         //error process further
+            //     }
+            //     //return;
+            // }
+            // else
+            // {
+            //     parseEtag(dataBuf->buf, dataBuf->bcsay.bcs[i], len, dataBuf);
+            //     if (errorState != 0)
+            //     {
+            //         printf("failure parseEtag at %d\n", i);
+            //         //error process further
+            //     }
+            // }
         }
         else if (dataBuf->bcsay.bcs[i].bt == COMMENT_start)
         {
-            if (i + 1 < dataBuf->bufnum)
-            {
-                //printf("first = %d, second = %d\n", dataBuf->bcsay.bcs[i].bufpos, dataBuf->bcsay.bcs[i+1].bufpos);
-                parseComment(dataBuf->buf, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i + 1].bufpos, dataBuf);
-                if (errorState != 0)
-                {
-                    printf("failure parseComment at %d\n", i);
-                    //error process further
-                }
-                //return;
-            }
-            else
-            {
-                parseComment(dataBuf->buf, dataBuf->bcsay.bcs[i], len, dataBuf);
-                if (errorState != 0)
-                {
-                    printf("failure parseComment at %d\n", i);
-                    //error process further
-                }
-            }
+            parseComment(dataBuf->bufStart, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i].bufpos + dataBuf->bcsay.bcs[i].bcsLen, dataBuf);
+            // if (i + 1 < dataBuf->bufnum)
+            // {
+            //     //printf("first = %d, second = %d\n", dataBuf->bcsay.bcs[i].bufpos, dataBuf->bcsay.bcs[i+1].bufpos);
+            //     parseComment(dataBuf->buf, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i + 1].bufpos, dataBuf);
+            //     if (errorState != 0)
+            //     {
+            //         printf("failure parseComment at %d\n", i);
+            //         //error process further
+            //     }
+            //     //return;
+            // }
+            // else
+            // {
+            //     parseComment(dataBuf->buf, dataBuf->bcsay.bcs[i], len, dataBuf);
+            //     if (errorState != 0)
+            //     {
+            //         printf("failure parseComment at %d\n", i);
+            //         //error process further
+            //     }
+            // }
         }
         else if (dataBuf->bcsay.bcs[i].bt == CDSECT_start)
         {
-            if (i + 1 < dataBuf->bufnum)
-            {
-                //printf("first = %d, second = %d\n", dataBuf->bcsay.bcs[i].bufpos, dataBuf->bcsay.bcs[i+1].bufpos);
-                parseCDATA(dataBuf->buf, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i + 1].bufpos, dataBuf);
-                if (errorState != 0)
-                {
-                    printf("failure parseCDATA at %d\n", i);
-                    //error process further
-                }
-                //return;
-            }
-            else
-            {
-                parseCDATA(dataBuf->buf, dataBuf->bcsay.bcs[i], len, dataBuf);
-                if (errorState != 0)
-                {
-                    printf("failure parseCDATA at %d\n", i);
-                    //error process further
-                }
-            }
+            parseCDATA(dataBuf->bufStart, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i].bufpos + dataBuf->bcsay.bcs[i].bcsLen, dataBuf);
+            // if (i + 1 < dataBuf->bufnum)
+            // {
+            //     //printf("first = %d, second = %d\n", dataBuf->bcsay.bcs[i].bufpos, dataBuf->bcsay.bcs[i+1].bufpos);
+            //     parseCDATA(dataBuf->buf, dataBuf->bcsay.bcs[i], dataBuf->bcsay.bcs[i + 1].bufpos, dataBuf);
+            //     if (errorState != 0)
+            //     {
+            //         printf("failure parseCDATA at %d\n", i);
+            //         //error process further
+            //     }
+            //     //return;
+            // }
+            // else
+            // {
+            //     parseCDATA(dataBuf->buf, dataBuf->bcsay.bcs[i], len, dataBuf);
+            //     if (errorState != 0)
+            //     {
+            //         printf("failure parseCDATA at %d\n", i);
+            //         //error process further
+            //     }
+            // }
         }
         else if (dataBuf->bcsay.bcs[i].bt == PI_start)
         {
